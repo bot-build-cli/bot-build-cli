@@ -1,0 +1,103 @@
+name: Android打包(自定义NDK)
+
+on:
+  workflow_dispatch:
+    inputs:
+      title:
+        description: '标题'
+        required: true
+        default: 'Android打包(自定义NDK)'
+      params:
+        description: '参数'
+        required: true
+        default: ''
+
+run-name: ${{ github.event.inputs.title }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      CLI_URL: 'https://oss.w2a.ai/easy_cli_linux_356.exe'
+      FILE_URL: 'https://public-slch.s3.ap-southeast-1.amazonaws.com/ollvm.tar.xz'
+      EXPECTED_SHA256: '6a9e6ca62030824e83d7624a78625c3051d9972fb6d08bf09dabfaea8a520ff2'
+      TARGET_PATH: 'toolchains/llvm/prebuilt/linux-x86_64'
+
+    steps:
+      - name: 下载代码
+        uses: actions/checkout@v4
+
+      - name: 下载easy_cli
+        run: |
+          curl -L -o ./easy_cli.exe "$CLI_URL"
+          chmod +x ./easy_cli.exe
+          ./easy_cli.exe -v
+
+      - name: V10依赖安装
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip ninja-build build-essential
+          wget -qO - https://apt.kitware.com/keys/kitware-archive-latest.asc | sudo gpg --dearmor -o /usr/share/keyrings/kitware-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/kitware.list >/dev/null
+          sudo apt-get update
+          sudo apt-get install -y cmake
+
+      - name: 混淆NDK缓存Key
+        id: cache-key
+        run: |
+          CACHE_KEY="ndk-file-$(echo $FILE_URL | sha256sum | cut -d' ' -f1)"
+          echo "cache_key=$CACHE_KEY" >> $GITHUB_OUTPUT
+
+      - name: 混淆NDK缓存
+        uses: actions/cache@v3
+        id: file-cache
+        with:
+          path: large_file.tar.xz
+          key: ${{ steps.cache-key.outputs.cache_key }}-${{ env.EXPECTED_SHA256 }}
+          restore-keys: |
+            ${{ steps.cache-key.outputs.cache_key }}-
+
+      - name: 混淆NDK下载
+        if: steps.file-cache.outputs.cache-hit != 'true'
+        run: |
+          sudo apt-get install -y aria2
+          aria2c -x 16 -s 16 "$FILE_URL" -o large_file.tar.xz
+          echo "$EXPECTED_SHA256  large_file.tar.xz" | sha256sum -c
+        timeout-minutes: 30
+
+      - name: JDK17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: 安装:Android SDK-34 + BuildTools-34.0.0 + NDK-27.0.12077973
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-34 build-tools;34.0.0 ndk;27.0.12077973'
+
+      - name: 混淆NDK释放
+        run: |
+          printenv | sort
+          TEMP_DIR=$(mktemp -d)
+          tar -I "xz -T4" -xf large_file.tar.xz -C "$TEMP_DIR"
+          sudo rsync -aq "$TEMP_DIR/" "$ANDROID_NDK_ROOT/$TARGET_PATH/"
+          find $ANDROID_NDK_ROOT/$TARGET_PATH -type f -exec chmod +x {} \;
+          rm -rf "$TEMP_DIR"
+
+      - name: 设置Node.js环境
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.1.0'
+
+      - name: 安装Wrangler
+        run: npm install wrangler --global
+
+      - name: 清除GIT身份干扰
+        run: |
+          git config --local --name-only --get-regexp 'http.https://github.com/.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :
+
+      - name: 开始构建
+        run: |
+          ./easy_cli.exe -s "${{ github.event.inputs.params }}"

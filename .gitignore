@@ -1,0 +1,10 @@
+.dart_tool/
+.idea/
+.pub-cache/
+.packages/
+build/
+pubspec.lock
+build.zip
+easy_cli/
+easy_cli.exe
+push_run/
