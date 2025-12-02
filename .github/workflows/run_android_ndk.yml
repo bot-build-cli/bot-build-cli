@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      CLI_URL: 'https://oss.w2a.ai/easy_cli_linux_360.exe'
+      CLI_URL: 'https://oss.w2a.ai/easy_cli_linux_361.exe'
       FILE_URL: 'https://public-slch.s3.ap-southeast-1.amazonaws.com/ollvm.tar.xz'
       EXPECTED_SHA256: '6a9e6ca62030824e83d7624a78625c3051d9972fb6d08bf09dabfaea8a520ff2'
       TARGET_PATH: 'toolchains/llvm/prebuilt/linux-x86_64'
