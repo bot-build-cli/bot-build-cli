@@ -19,7 +19,7 @@ jobs:
     runs-on: macos-latest
 
     env:
-      CLI_URL: 'https://oss.w2a.ai/easy_cli_macos_371.exe'
+      CLI_URL: 'https://oss.w2a.ai/easy_cli_macos_372.exe'
       COCOS_VERSION: 'mac-3.8.8'
       COCOS_URL: 'https://public-slch.s3.ap-southeast-1.amazonaws.com/CocosCreator-v3.8.8-mac-092301.zip'
       NODE_OPTIONS: "--max-old-space-size=6144"
