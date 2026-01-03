@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      CLI_URL: 'https://oss.w2a.ai/easy_cli_linux_379.exe'
+      CLI_URL: 'https://oss.w2a.ai/easy_cli_linux_380.exe'
 
     steps:
       - name: 下载代码
@@ -47,6 +47,9 @@ jobs:
 
       - name: 安装Wrangler
         run: npm install wrangler --global
+
+      - name: 安装Gemini
+        run: npm install -g @google/gemini-cli
 
       - name: 清除GIT身份干扰
         run: |
