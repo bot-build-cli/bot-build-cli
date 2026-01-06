@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      CLI_URL: 'https://oss.w2a.ai/easy_cli_linux_384.exe'
+      CLI_URL: 'https://oss.w2a.ai/easy_cli_linux_385.exe'
 
     steps:
       - name: 下载代码
